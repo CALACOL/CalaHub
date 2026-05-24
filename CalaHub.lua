@@ -5,205 +5,201 @@ game.StarterGui:SetCore("SendNotification",{
     Text = "Todo funciona 😎",
     Duration = 5
 })
--- FUNCIONES UNIVERSALES FUNCIONALES PARA CALAHUB
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
--- INFINITE JUMP
-local InfiniteJump = false
+local player = Players.LocalPlayer
 
-game:GetService("UserInputService").JumpRequest:Connect(function()
-	if InfiniteJump then
-		game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "CalaHub"
+gui.Parent = game.CoreGui
+
+-- MAIN FRAME
+local main = Instance.new("Frame")
+main.Parent = gui
+main.Size = UDim2.new(0,320,0,260)
+main.Position = UDim2.new(0.5,-160,0.5,-130)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+main.BorderSizePixel = 0
+
+local corner = Instance.new("UICorner",main)
+corner.CornerRadius = UDim.new(0,15)
+
+local stroke = Instance.new("UIStroke",main)
+stroke.Color = Color3.fromRGB(0,170,255)
+stroke.Thickness = 2
+
+-- TITLE
+local title = Instance.new("TextLabel")
+title.Parent = main
+title.Size = UDim2.new(1,0,0,40)
+title.BackgroundTransparency = 1
+title.Text = "☠ CalaHub"
+title.TextColor3 = Color3.fromRGB(0,170,255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 24
+
+-- CLOSE BUTTON
+local close = Instance.new("TextButton")
+close.Parent = main
+close.Size = UDim2.new(0,30,0,30)
+close.Position = UDim2.new(1,-35,0,5)
+close.BackgroundColor3 = Color3.fromRGB(25,25,25)
+close.Text = "X"
+close.TextColor3 = Color3.fromRGB(255,255,255)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 20
+
+local closeCorner = Instance.new("UICorner",close)
+closeCorner.CornerRadius = UDim.new(1,0)
+
+close.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+-- SCROLL
+local scroll = Instance.new("ScrollingFrame")
+scroll.Parent = main
+scroll.Size = UDim2.new(1,-20,1,-55)
+scroll.Position = UDim2.new(0,10,0,45)
+scroll.CanvasSize = UDim2.new(0,0,0,400)
+scroll.ScrollBarThickness = 4
+scroll.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout",scroll)
+layout.Padding = UDim.new(0,8)
+
+-- TOGGLE FUNCTION
+local function CreateToggle(text,callback)
+	local button = Instance.new("TextButton")
+	button.Parent = scroll
+	button.Size = UDim2.new(1,-5,0,45)
+	button.BackgroundColor3 = Color3.fromRGB(20,20,20)
+	button.Text = text.." : OFF"
+	button.TextColor3 = Color3.fromRGB(255,255,255)
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 18
+
+	local bc = Instance.new("UICorner",button)
+	bc.CornerRadius = UDim.new(0,10)
+
+	local enabled = false
+
+	button.MouseButton1Click:Connect(function()
+		enabled = not enabled
+
+		if enabled then
+			button.Text = text.." : ON"
+			button.BackgroundColor3 = Color3.fromRGB(0,170,255)
+		else
+			button.Text = text.." : OFF"
+			button.BackgroundColor3 = Color3.fromRGB(20,20,20)
+		end
+
+		callback(enabled)
+	end)
+end
+
+-- BOX FUNCTION
+local function CreateBox(text,default,callback)
+	local frame = Instance.new("Frame")
+	frame.Parent = scroll
+	frame.Size = UDim2.new(1,-5,0,45)
+	frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+
+	local fc = Instance.new("UICorner",frame)
+	fc.CornerRadius = UDim.new(0,10)
+
+	local label = Instance.new("TextLabel")
+	label.Parent = frame
+	label.Size = UDim2.new(0.5,0,1,0)
+	label.BackgroundTransparency = 1
+	label.Text = text
+	label.TextColor3 = Color3.fromRGB(255,255,255)
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 16
+
+	local box = Instance.new("TextBox")
+	box.Parent = frame
+	box.Size = UDim2.new(0,80,0,30)
+	box.Position = UDim2.new(1,-90,0.5,-15)
+	box.BackgroundColor3 = Color3.fromRGB(30,30,30)
+	box.TextColor3 = Color3.fromRGB(0,170,255)
+	box.Font = Enum.Font.GothamBold
+	box.TextSize = 16
+	box.Text = tostring(default)
+
+	local bc2 = Instance.new("UICorner",box)
+	bc2.CornerRadius = UDim.new(0,8)
+
+	box.FocusLost:Connect(function()
+		callback(tonumber(box.Text))
+	end)
+end
+
+-- SPEED
+CreateBox("WalkSpeed",16,function(value)
+	if value and player.Character then
+		player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = value
+	end
+end)
+
+-- FLY
+local Fly = false
+local FlySpeed = 50
+
+CreateBox("Fly Speed",50,function(value)
+	if value then
+		FlySpeed = value
+	end
+end)
+
+CreateToggle("Fly",function(state)
+	Fly = state
+end)
+
+RunService.RenderStepped:Connect(function()
+	if Fly and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+
+		local hrp = player.Character.HumanoidRootPart
+		local cam = workspace.CurrentCamera
+		local move = Vector3.zero
+
+		if UIS:IsKeyDown(Enum.KeyCode.W) then
+			move += cam.CFrame.LookVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.S) then
+			move -= cam.CFrame.LookVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.A) then
+			move -= cam.CFrame.RightVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.D) then
+			move += cam.CFrame.RightVector
+		end
+
+		hrp.Velocity = move * FlySpeed
 	end
 end)
 
 -- NOCLIP
 local Noclip = false
 
-game:GetService("RunService").Stepped:Connect(function()
-	if Noclip and game.Players.LocalPlayer.Character then
-		for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+CreateToggle("Noclip",function(state)
+	Noclip = state
+end)
+
+RunService.Stepped:Connect(function()
+	if Noclip and player.Character then
+		for _,v in pairs(player.Character:GetDescendants()) do
 			if v:IsA("BasePart") then
 				v.CanCollide = false
 			end
 		end
 	end
 end)
-
--- FULLBRIGHT
-local FullBright = false
-
-spawn(function()
-	while wait() do
-		if FullBright then
-			game:GetService("Lighting").Brightness = 5
-			game:GetService("Lighting").ClockTime = 12
-			game:GetService("Lighting").FogEnd = 100000
-			game:GetService("Lighting").GlobalShadows = false
-		end
-	end
-end)
-
--- FLY
-local Fly = false
-local UIS = game:GetService("UserInputService")
-local player = game.Players.LocalPlayer
-local speed = 50
-
-spawn(function()
-	while wait() do
-		if Fly and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-
-			local hrp = player.Character.HumanoidRootPart
-
-			local bv = hrp:FindFirstChild("CalaFly")
-
-			if not bv then
-				bv = Instance.new("BodyVelocity")
-				bv.Name = "CalaFly"
-				bv.MaxForce = Vector3.new(999999,999999,999999)
-				bv.Parent = hrp
-			end
-
-			local cam = workspace.CurrentCamera
-			local move = Vector3.zero
-
-			if UIS:IsKeyDown(Enum.KeyCode.W) then
-				move += cam.CFrame.LookVector
-			end
-
-			if UIS:IsKeyDown(Enum.KeyCode.S) then
-				move -= cam.CFrame.LookVector
-			end
-
-			if UIS:IsKeyDown(Enum.KeyCode.A) then
-				move -= cam.CFrame.RightVector
-			end
-
-			if UIS:IsKeyDown(Enum.KeyCode.D) then
-				move += cam.CFrame.RightVector
-			end
-
-			bv.Velocity = move * speed
-
-		else
-			if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				local old = player.Character.HumanoidRootPart:FindFirstChild("CalaFly")
-
-				if old then
-					old:Destroy()
-				end
-			end
-		end
-	end
-end)
-
--- ESP
-local ESP = false
-
-spawn(function()
-	while wait(1) do
-		if ESP then
-			for _,v in pairs(game.Players:GetPlayers()) do
-				if v ~= player and v.Character and not v.Character:FindFirstChild("CalaESP") then
-
-					local h = Instance.new("Highlight")
-					h.Name = "CalaESP"
-					h.FillColor = Color3.fromRGB(0,170,255)
-					h.OutlineColor = Color3.fromRGB(255,255,255)
-					h.Parent = v.Character
-
-				end
-			end
-		else
-			for _,v in pairs(game.Players:GetPlayers()) do
-				if v.Character and v.Character:FindFirstChild("CalaESP") then
-					v.Character.CalaESP:Destroy()
-				end
-			end
-		end
-	end
-end)
-
--- HITBOX
-local Hitbox = false
-
-spawn(function()
-	while wait(1) do
-		if Hitbox then
-			for _,v in pairs(game.Players:GetPlayers()) do
-				if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-
-					v.Character.HumanoidRootPart.Size = Vector3.new(8,8,8)
-					v.Character.HumanoidRootPart.Transparency = 0.5
-					v.Character.HumanoidRootPart.BrickColor = BrickColor.new("Bright blue")
-					v.Character.HumanoidRootPart.Material = Enum.Material.Neon
-					v.Character.HumanoidRootPart.CanCollide = false
-
-				end
-			end
-		end
-	end
-end)
-
--- TRACERS
-local Tracers = false
-
-spawn(function()
-	while wait(1) do
-		if Tracers then
-			for _,v in pairs(game.Players:GetPlayers()) do
-				if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-
-					if not v.Character:FindFirstChild("Tracer") then
-
-						local beam = Instance.new("Beam")
-						beam.Name = "Tracer"
-
-						local a0 = Instance.new("Attachment")
-						local a1 = Instance.new("Attachment")
-
-						a0.Parent = player.Character.HumanoidRootPart
-						a1.Parent = v.Character.HumanoidRootPart
-
-						beam.Attachment0 = a0
-						beam.Attachment1 = a1
-						beam.Width0 = 0.1
-						beam.Width1 = 0.1
-						beam.Color = ColorSequence.new(Color3.fromRGB(0,170,255))
-						beam.Parent = v.Character
-
-					end
-				end
-			end
-		end
-	end
-end)
-
--- FPS BOOST
-local FPSBoost = false
-
-spawn(function()
-	while wait(2) do
-		if FPSBoost then
-			for _,v in pairs(workspace:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.Material = Enum.Material.SmoothPlastic
-					v.Reflectance = 0
-				end
-
-				if v:IsA("Texture") then
-					v:Destroy()
-				end
-			end
-		end
-	end
-end)
-
--- FOV
-local camera = workspace.CurrentCamera
-
-local function SetFOV(num)
-	camera.FieldOfView = num
-end
-
-print("Funciones universales cargadas 🔥")
